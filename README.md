@@ -6,6 +6,8 @@ everything on a single CPU core and a single thread. Dedicated graphics cards,
 where the "boring stuff" could be offloaded, did not see widespread adoption
 until the early 2000's.
 
+[![Watch the video](https://img.youtube.com/vi/HjbRNnHziek/hqdefault.jpg)](https://youtu.be/HjbRNnHziek)
+
 zspace is a software 3d engine that I worked on in 2003. It supports
 - Wavefront OBJ models (previously .x)
 - 24bit textures up to 256x256 as BMPs
@@ -31,10 +33,11 @@ that with the [DirectXMesh](https://github.com/microsoft/DirectXMesh) library.
 The winmm.lib library was removed as time is now provided by SDL.
 
 
-# Download and Install#
+# Download and Install #
 
 Follow the link to download the working demo, includes X64 binary's and required
-assets [downloaded here](https://204am.com/downloads/zspace_2025.zip) md5:d9252723150157a82764b41bf199e5e1
+assets  
+[downloaded here](https://204am.com/downloads/zspace_2025.zip) md5:d9252723150157a82764b41bf199e5e1
 
 
 # Compiling #

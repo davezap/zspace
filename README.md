@@ -17,7 +17,7 @@ zspace is a software 3d engine that I worked on in 2003. It supports
 - 3D sprites with alpha transparency and animation.
 - rudimentary particle effects
 
-I can be contacted via davez@204am.com
+
 
 # Changes #
 
@@ -32,6 +32,10 @@ The old code used XLoader to read the Microsoft .X mesh files, so I replaced
 that with the [DirectXMesh](https://github.com/microsoft/DirectXMesh) library.
 
 The winmm.lib library was removed as time is now provided by SDL.
+
+# What's next? #
+
+Probably nothing! aside from a little tinkering.
 
 
 # Download and Install #
@@ -78,3 +82,7 @@ down on request.
 Contains the article explaining perspective corrected texture mapping by posterity. Tom Hammerslevs now works at EA (assuming it's the same person) - Thanks Tom :)
 
 The original source code for this project is world.h and the creatively titled Project_One.cpp
+
+# Contact # 
+
+I can be contacted via davez@204am.com

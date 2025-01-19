@@ -37,9 +37,10 @@ The winmm.lib library was removed as time is now provided by SDL.
 # Download and Install #
 
 Follow the link to download the working demo, includes X64 binary's and required
-assets  
+assets. Just extract files to a folder and run the executable.
 [downloaded here](https://204am.com/downloads/zspace_2025.zip) md5:d9252723150157a82764b41bf199e5e1
 
+This project requires the Microsoft Visual C++ Redistributable [downloaded here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) 
 
 # Compiling #
 

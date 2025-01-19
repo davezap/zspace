@@ -1,0 +1,268 @@
+
+		<HTML>
+		<HEAD>
+		<TITLE>Perspective Corrected Texture Mapping</TITLE>
+		<style>
+			body {
+				background-color: #000000;
+				color: #dbdbdb;
+			}
+		</style>
+		</HEAD>
+		<BODY>
+
+          <center>
+<br>
+          <center>		
+		<table border="0" cellpadding="10" cellspacing="0">
+		<tr>
+		<td>
+          <br><br>
+<pre>
+                      Perspective Corrected Texturing
+
+ [From Tom Hammerslevs Graphics Coding Page
+ Check it out at http://www.users.globalnet.co.uk/~tomh ]
+
+ Perspective Corrected Texturing
+
+ ---------------------------------------------------------------------------
+
+ Introduction
+
+ Perspective texturing is an almost essential addition to any 3D engine
+ nowadays. People are sick of watching affine texture slip and slide all
+ over their polygons, they want something better. And perspective texturing
+ solves this problem. I'll be describing Chris Hecker-style perspective
+ texturing here, rather than the 3 "Magic Vectors" method.
+ ---------------------------------------------------------------------------
+
+ Affine Texturing
+
+ Ordinary texturing is very simple to code. We specify u, v at each vertex
+ of our polygon (I'll be describing triangles however). We interpolate the U
+ and V across the triangle edges, and then across scanlines. With triangles,
+ the delta for the scanline is constant, which speeds things up a lot. Then
+ its just a case of interpolating texture co-ords across a scanline, and
+ sampling the texture map. Very simple, very fast. And very limited. If your
+ triangles get too big, too much difference in Zs at vertices etc, the
+ texture starts to slide. It looks horrible. We need perspective correction.
+
+ ---------------------------------------------------------------------------
+
+ Perspective Texturing
+
+ Probably the most common form of perspective texturing is done via a divide
+ by Z. Its a very simple algorithm. Instead of interpolate U and V, we
+ instead interpolate U/Z and V/Z. 1/Z is also interpolated. At each pixel,
+ we take our texture co-ords, and divide them by Z. Hang on, you're thinking
+ - if we divide by the same number twice (Z) don't we get back to where we
+ started - like a double reciprocal? Well, sort of. Z is also interpolated,
+ so we're not dividing by the same Z twice. We then take the new U and V
+ values, index into our texture map, and plot the pixel. Pseudo-code might
+ be:
+
+ su = Screen-U = U/Z
+ sv = Screen-V = V/Z
+ sz = Screen-Z = 1/Z
+
+ for x=startx to endx
+         u = su / sz
+         v = sv / sz
+         PutPixel(x, y, texture[v][u])
+         su += deltasu
+         sv += deltasv
+         sz += deltasz
+ end
+
+ Very simple, and very slow.
+
+ ---------------------------------------------------------------------------
+
+ Speeding Up The Routine
+
+ The first thing that comes to mind when speeding up this routine is the two
+ divides - divides are a slow operation, and should be avoided. So, we'll
+ turn those 2 divides into a reciprocal and a multiply:
+
+ for x=startx to endx
+         recip = 1.0 / sz
+         u = su * recip
+         v = sv * recip
+         PutPixel(x, y, texture[v][u])
+         su += deltasu
+         sv += deltasv
+         sz += deltasz
+ end
+
+ This helps things a little. The second big way of speeding it up is to lerp
+ (linear interpolate) between sets of 'correct' u, v. We calculate correct
+ u, v every n pixels, and interpolate between them. This cuts down on the
+ divides overall, but it can lead to problems: if your correction value is
+ too high for your resolution, the texture will 'wiggle' - the sample rate
+ is too low. If your correction value is too high, you'll see all sorts of
+ weird bendy patterns at certain viewing angles. It takes a little time to
+ find the best correction level for a given resolution. Pseudo-code for this
+ would look something like:
+
+ zinv = 1.0 / sz;        // do the divide here
+ width++;
+ oddedge = width & cormask; // test for case of raggy-edge
+
+ zinv *= 65536.0;
+ u = su * zinv;
+ v = sv * zinv;          // reciprocal then multiply
+ RoundToInt(logu1, u);
+ RoundToInt(logv1, v);
+ sv += cordvdelta;       // cordvdelta etc are deltasv*correction
+ su += cordudelta;
+ sz += cordzdelta;
+
+ zinv = (1.0 / sz) * 65536.0; // muls by 65536 are used to do
+                              // u << 16 a little better
+                              // one fmul = 3 clocks
+                              // 2 shls = 2*2 clocks
+
+ while(width > 0) {
+         if(width >= correction)
+                 pixels = correction;
+         else
+                 pixels = oddedge;       // we have a raggy edge
+
+         width -= correction;    // even if edge is raggy loop will
+                                 // still terminate due to this
+
+         u = su * zinv;
+         v = sv * zinv;
+         RoundToInt(&logu2, u);
+         RoundToInt(&logv2, v);
+
+         luadd = (logu2 - logu1) >> corshift; // deltas for linear
+         lvadd = (logv2 - logv1) >> corshift; // pass
+
+         logu = logu1;   // 'logical' u and v
+         logv = logv1;
+
+         sv += cordvdelta;
+         su += cordudelta;
+         sz += cordzdelta;
+
+         zinv = 1.0 / sz;        // again, do divide in parallel
+         while(pixels--) {
+                 index = ((logv >> 8) & 0xFF00) +
+                         ((logu >> 16) & 0xFF);
+                 PutPixel(x, y, texture[index]);
+                 logu += luadd;
+                 logv += lvadd;
+         }
+
+         zinv *= 65536.0;
+         logu1 = logu2;
+         logv1 = logv2;
+ }
+
+ This is based on the loop I use. I use the idea of doing floating point
+ operations in parallel a lot here, because it means we can effectively get
+ them for free. However it is often quite hard to persuade the compiler that
+ this is what you want to do; it'll take a little experimentation. Note also
+ that this loop doesn't have a seperate if () {} statement to cover the case
+ of a 'raggy-edge', like most perspective texturers do. I see that in a lot
+ of code, this way is smaller, and easier to maintain and optimize.
+
+ ---------------------------------------------------------------------------
+
+ Other Considerations
+
+ A lot of people take a religious hatred to floating point calculations,
+ because they think they are slow. Well, they may have been slow in times
+ past, but now CPUs can do them very quickly indeed; they can be up to 29%
+ faster on a 486DX, and 40% faster on a 586 (intel). I found these figures
+ by doing 1,000,000 matrix muls, 1,000,000 * (Add/Sub/Div/Mul). Note that
+ conversion to integer however, is still slow.
+
+ I know one person in particular was adamant that FPU was slower in his
+ tests. What was his test? Something like:
+
+ for(x=0;x<65536; x++)
+         array[x] = 1.0 * x;
+
+ What a stupid test! For a number of reasons:
+
+   1. Its not representative of the kind of work you'd do in a 3D engine
+   2. Most compilers would optimize away a mutiplication by 1.0.
+   3. Conversion to integer can be slow; especially in Watcom C 10.6 for
+      DOS. Did you know that to convert to integer, it calls a function
+      __CHP, which contains the following code:
+
+      __CHP:          push    eax
+                      fstcw   dword ptr [esp]
+                      wait
+                      push    dword ptr [esp]
+                      mov     byte ptr +1H[esp],1fH
+                      fldcw   dword ptr [esp]
+                      frndint
+                      fldcw   dword ptr +4H[esp]
+                      wait
+                      lea     esp,+8H[esp]
+                      ret
+
+      Its amazing what can be done with WDISASM, and WLIB, and a little
+      lateral thought...
+
+ FPU operations can also be done in parallel with the integer unit on Intel
+ chips. I don't think this can be done on Cyrix. Thats not worth worrying
+ about. Despite all you might hate intels monopoly, Cyrix have no real
+ chance of ever breaking it. So you may as well optimize with an Intel chip
+ in mind.
+
+ The 1/z values can also be used for Z-buffering. Which is very handy. You
+ can then have perspective correct texturing, and perspective correct
+ Z-Buffering, at little speed cost. See my page on Z-Buffering for more
+ information on that.
+
+ I also toyed with the idea of pre-perspective correcting textures. I heard
+ that in Quake, textures are lit in a seperate pass to the texturing, due to
+ the lack of registers on the 586 (can Intel count higher than the number of
+ fingers they posess?). I wonder if it would be possible to do a similar
+ thing with perspective texturing? Theoretically, it shouldn't work, because
+ I think that the routine is dependant on the shape of the polygon being
+ mapped to. If anyone has any thoughts on this, I'd be very interested.
+
+ Another possible speed up would be to use an affine texture where the
+ change in z is very little, and a perspective texturer where the change is
+ large. Hmm.. what would this look like in code?
+
+ average-z = (z1 + z2 + z3) / 3
+
+ zdiff = 0
+ for n=1 to 3
+         zdiff += (z(n) - average-z)**2
+ end
+
+ if zdiff < z-threshold**2
+         Affinetexture(polygon)
+ else
+         PerspectiveTexture(polygon)
+ end
+
+ Sound about right? Maybe I'll try this one day. Idea here is to find
+ difference between average Z and Z of each triangle. Distance is not square
+ -rooted, just kept as a square, then compared against squared threshold. If
+ too much Z change is present, then perspective is used. This however may
+ fail with large triangles.
+
+ Tom Hammersley, tomh@globalnet.co.uk
+
+ [BACK] Back
+
+</pre>       
+
+          </td>
+          </tr>
+          </table>
+          </center>
+            
+          </BODY>
+		</HTML>
+		
+	

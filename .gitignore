@@ -1,0 +1,13 @@
+Thumbs.db
+$PBOPREFIX$.txt
+$PREFIX$
+$REVISION$
+bin/
+.vs/
+x64/
+.env
+zspace/
+SDL3.dll
+SDL3.lib
+thumb.png
+zspace.mp4

@@ -6,7 +6,7 @@ everything on a single CPU core and a single thread. Dedicated graphics cards,
 where the "boring stuff" could be offloaded, did not see widespread adoption
 until the early 2000's.
 
-[![Watch the video](https://img.youtube.com/vi/HjbRNnHziek/hqdefault.jpg)](https://youtu.be/HjbRNnHziek)
+https://youtu.be/HjbRNnHziek
 
 zspace is a software 3d engine that I worked on in 2003. It supports
 - Wavefront OBJ models (previously .x)

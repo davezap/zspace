@@ -33,6 +33,8 @@ that with the [DirectXMesh](https://github.com/microsoft/DirectXMesh) library.
 
 The winmm.lib library was removed as time is now provided by SDL.
 
+With my now Ryzon 9 3900 having a single core performance 500% faster than the Pentium D of the day it hardley seems fair I spent so much time trying to optomize the code. Now I have to cap it at 60fps.
+
 # What's next? #
 
 Probably nothing! aside from a little tinkering.
@@ -72,7 +74,9 @@ build of C:\Libs\SDL\VisualC\x64\Release\SDL3.dll and the assets folder.
 Main.cpp is the entrypoint for SDL and the main game loop.
 
 math.h is the vector math and lookup tables.
+
 LX.cpp is my hacked replacement for XLoader.
+
 engine.cpp is where the rendering happens.
 
 Meshconvert - So turns out the only file DirectXMesh does not support is the .X file that I needed it to support. So what I did was convert them all to Wavefront OBJ's.

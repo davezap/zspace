@@ -48,6 +48,19 @@ assets. Just extract files to a folder and run the executable.
 
 This project requires the Microsoft Visual C++ Redistributable [downloaded here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) 
 
+# Controls # 
+
+keyboard
+
+- Use arrow keys to move around.
+- Space : Shoot rainbow pom poms
+- C : Shoot rainbow pom poms in all directions
+- S, A : Move camera in and out
+- N, M : Change camera angle X
+- G, H : Change camera angle y
+- J, K : Change camera angle z
+
+
 # Compiling #
 
 The project is built with Visual Studio 2022, and requires you to build [SDL3](https://github.com/libsdl-org/SDL) and [DirectXMesh](https://github.com/microsoft/DirectXMesh). The project 

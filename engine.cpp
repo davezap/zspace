@@ -939,9 +939,9 @@ inline void RenderSprites2(void)
 						{
 
 							pZBuffer[0] = qqqc;
-							video_buffer[1] = MyTextureP[0];// *objalpha + video_buffer[1] * objalphaInv;
-							video_buffer[2] = MyTextureP[1];// *objalpha + video_buffer[2] * objalphaInv;
-							video_buffer[3] = MyTextureP[2];// *objalpha + video_buffer[3] * objalphaInv;
+							video_buffer[1] = MyTextureP[0] *objalpha + video_buffer[1] * objalphaInv;
+							video_buffer[2] = MyTextureP[1] *objalpha + video_buffer[2] * objalphaInv;
+							video_buffer[3] = MyTextureP[2] *objalpha + video_buffer[3] * objalphaInv;
 						}
 					}
 
@@ -981,13 +981,13 @@ inline void RenderSprites2(void)
 					{
 						if((qqqc = obj->lz+ZBufferPage) > pZBuffer[0])
 						{
-							MyTextureP = &MyTexturePP[int(scaleCnt) * 2];
+							MyTextureP = &MyTexturePP[int(scaleCnt) * 4];
 							if(MyTextureP[0]+MyTextureP[1]+MyTextureP[2])
 							{
-							pZBuffer[0] = qqqc;
-							video_buffer[1] = MyTextureP[0];
-							video_buffer[2] = MyTextureP[1];
-							video_buffer[3] = MyTextureP[2];
+								pZBuffer[0] = qqqc;
+								video_buffer[1] = MyTextureP[0];
+								video_buffer[2] = MyTextureP[1];
+								video_buffer[3] = MyTextureP[2];
 							}
 						}
 						video_buffer+=4;
@@ -2131,7 +2131,7 @@ bool LoadTexture(cTexture &MyTexture, const wchar_t *szFileName, bool force256)
 		MyTexture.bmpBuffer= new BYTE[4 * MyTexture.bmWidth * MyTexture.bmHeight];
 		
 		zp_size_t r = GetBitmapBits(hBitmap, bm.bmWidth * bm.bmHeight * 3,tmpBMP);
-
+		
 		// Converting bitmap to continous byte array.. Saves doing the same
 		// sort of math per pixel later on Also we are streching the origional
 		// Bitmap to fit 256x256.
@@ -2184,10 +2184,10 @@ bool LoadTextureAlpha(cTexture &MyTexture, const wchar_t *szFileName, bool force
 	HPALETTE      hPalette;
 	BYTE		*tmpBMP;
 	
-	std::wstring absfile = L"C:\\temp\\zspace\\zspace_2025\\zspace\\assets\\";
-	absfile += szFileName;
+	std::wstring file = PATH_ASSETS;
+	file += szFileName;
 
-	if( LoadBitmapFromBMPFile(absfile.c_str(), &hBitmap, &hPalette))
+	if( LoadBitmapFromBMPFile(file.c_str(), &hBitmap, &hPalette))
 	{
 
 		GetObject( hBitmap, sizeof(BITMAP), &bm );

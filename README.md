@@ -85,4 +85,4 @@ The original source code for this project is world.h and the creatively titled P
 
 # Contact # 
 
-I can be contacted via davez@204am.com
+I can be contacted at davez@204am.com

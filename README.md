@@ -52,20 +52,26 @@ The project is built with Visual Studio 2022, and requires you to build [SDL3](h
 
 The project assumes you have put them both in C:\Libs\SDL\ and C:\Libs\DirectXMesh-main\ respectively.
 
-Follow the SDL docs\README.visualc.md
+Follow the SDL docs\README.visualc.md for build instructions.
+
 DirectXMesh lib is simpler, just open the DirectXMesh_Desktop_2022.sln, and build the DirectXMesh branch.
 
 Add C:\Libs\SDL\VisualC\x64\Release to your environment variables or copy the 
 SDL3.dll to the project folder either works.
 
-Assuming it can find both of those my project "should" build just fine.
+Assuming it can find both of those my project "should" build and run just fine.
+
+# Release # 
+
+After doing a release build you just need to ship the executable with the release
+build of C:\Libs\SDL\VisualC\x64\Release\SDL3.dll and the assets folder.
 
 
 # Contents #
 
 Main.cpp is the entrypoint for SDL and the main game loop.
 
-math.cpp is the vector math and lookup tables.
+math.h is the vector math and lookup tables.
 LX.cpp is my hacked replacement for XLoader.
 engine.cpp is where the rendering happens.
 

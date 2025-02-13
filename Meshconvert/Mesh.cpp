@@ -22,6 +22,7 @@
 #define NOSERVICE
 #define NOHELP
 #ifdef _MSC_VER
+
 #pragma warning(pop)
 #endif
 

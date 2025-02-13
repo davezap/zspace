@@ -25,7 +25,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
     t1 = SDL_GetTicks();
 
-    Init();
+    init();
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
@@ -33,6 +33,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
+    deinit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     /* SDL will clean up the window/renderer for us. */
@@ -56,7 +57,6 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 }
 
 
-
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
     uint64_t t2 = SDL_GetTicks();
@@ -73,7 +73,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 
             SDL_memset4(data, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
-            Game_Main((unsigned char*)data);
+            game_main((unsigned char*)data);
             t1 = t2;
 
 

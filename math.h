@@ -47,28 +47,21 @@ inline float MySin(float& fAng)
 
 inline void MatMult(float mat1[4][4], float mat2[4][4])
 {
-    // MatMult.. What follows is the unroaled version of this.
+    float temp[4][4] = { 0 };
 
-    float temp[4][4];
+    for (unsigned char i = 0; i < 4; i++)
+        for (unsigned char j = 0; j < 4; j++)
+            for (unsigned char k = 0; k < 4; k++)
+                temp[i][j] += (mat1[i][k] * mat2[k][j]);
 
-    for (short unsigned int i = 0; i < 4; i++)
-    {
-        //for(short unsigned int j = 0; j<4; j++)
-            //temp[i][j] = (mat1[i][j] * mat2[0][j]) + (mat1[i][1] * mat2[1][j]) + (mat1[i][2] * mat2[2][j]) + (mat1[i][3] * mat2[3][j]);
-        temp[i][0] = (mat1[i][0] * mat2[0][0]) + (mat1[i][1] * mat2[1][0]) + (mat1[i][2] * mat2[2][0]) + (mat1[i][3] * mat2[3][0]);
-        temp[i][1] = (mat1[i][0] * mat2[0][1]) + (mat1[i][1] * mat2[1][1]) + (mat1[i][2] * mat2[2][1]) + (mat1[i][3] * mat2[3][1]);
-        temp[i][2] = (mat1[i][0] * mat2[0][2]) + (mat1[i][1] * mat2[1][2]) + (mat1[i][2] * mat2[2][2]) + (mat1[i][3] * mat2[3][2]);
-        temp[i][3] = (mat1[i][0] * mat2[0][3]) + (mat1[i][1] * mat2[1][3]) + (mat1[i][2] * mat2[2][3]) + (mat1[i][3] * mat2[3][3]);
-    }
 
-    for (short unsigned int i = 0; i < 4; i++)
+    for (unsigned char i = 0; i < 4; i++)
     {
         mat1[i][0] = temp[i][0];
         mat1[i][1] = temp[i][1];
         mat1[i][2] = temp[i][2];
         mat1[i][3] = temp[i][3];
     }
-
 }
 
 
@@ -102,6 +95,12 @@ inline void RotatePntExB(float Matrix[4][4], float fAngX, float fAngY, float fAn
         MatMult(Matrix, rmat);
         return;
 */
+// Y
+    rmat[0][0] = MyCos(fAngY); rmat[0][1] = 0; rmat[0][2] = -MySin(fAngY); rmat[0][3] = 0;
+    rmat[1][0] = 0; rmat[1][1] = 1; rmat[1][2] = 0; rmat[1][3] = 0;
+    rmat[2][0] = MySin(fAngY); rmat[2][1] = 0; rmat[2][2] = MyCos(fAngY); rmat[2][3] = 0;
+    rmat[3][0] = 0; rmat[3][1] = 0; rmat[3][2] = 0; rmat[3][3] = 1;
+    MatMult(Matrix, rmat);
 
     // X
     rmat[0][0] = 1;               rmat[0][1] = 0; rmat[0][2] = 0;               rmat[0][3] = 0;
@@ -117,12 +116,7 @@ inline void RotatePntExB(float Matrix[4][4], float fAngX, float fAngY, float fAn
     rmat[3][0] = 0; rmat[3][1] = 0; rmat[3][2] = 0; rmat[3][3] = 1;
     MatMult(Matrix, rmat);
 
-    // Y
-    rmat[0][0] = MyCos(fAngY); rmat[0][1] = 0; rmat[0][2] = -MySin(fAngY); rmat[0][3] = 0;
-    rmat[1][0] = 0; rmat[1][1] = 1; rmat[1][2] = 0; rmat[1][3] = 0;
-    rmat[2][0] = MySin(fAngY); rmat[2][1] = 0; rmat[2][2] = MyCos(fAngY); rmat[2][3] = 0;
-    rmat[3][0] = 0; rmat[3][1] = 0; rmat[3][2] = 0; rmat[3][3] = 1;
-    MatMult(Matrix, rmat);
+
 
 }
 
@@ -196,6 +190,17 @@ inline void RotatePntExBe(float Matrix[4][4], float fAngX, float fAngY, float fA
 */
 }
 
+inline void TranslateEx(float Matrix[4][4], float Xt, float Yt, float Zt)
+{
+    float tmat[4][4];
+
+    tmat[0][0] = 1; tmat[0][1] = 0; tmat[0][2] = 0; tmat[0][3] = 0;
+    tmat[1][0] = 0; tmat[1][1] = 1; tmat[1][2] = 0; tmat[1][3] = 0;
+    tmat[2][0] = 0; tmat[2][1] = 0; tmat[2][2] = 1; tmat[2][3] = 0;
+    tmat[3][0] = Xt; tmat[3][1] = Yt; tmat[3][2] = Zt; tmat[3][3] = 1;
+    MatMult(Matrix, tmat);
+}
+
 inline void Translate(float Matrix[4][4], float& Xt, float& Yt, float& Zt)
 {
     float tmat[4][4];
@@ -206,6 +211,8 @@ inline void Translate(float Matrix[4][4], float& Xt, float& Yt, float& Zt)
     tmat[3][0] = Xt; tmat[3][1] = Yt; tmat[3][2] = Zt; tmat[3][3] = 1;
     MatMult(Matrix, tmat);
 }
+
+
 
 inline void Transform(float Matrix[4][4], float& pX, float& pY, float& pZ)
 {

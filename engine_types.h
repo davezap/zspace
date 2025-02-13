@@ -5,7 +5,7 @@
 
 
 typedef unsigned char BYTE;
-typedef unsigned int zp_size_t;
+typedef unsigned int z_size_t;
 
 struct cTexture
 {
@@ -63,7 +63,7 @@ struct polygon_type
 	float nY = 0.0f;
 	float nZ = 0.0f;
 	float D = 0.0f;
-	zp_size_t SurfaceTexture = 0;
+	z_size_t SurfaceTexture = 0;
 
 	vertex_type* vertex[3] = {};
 	uv_type uv[3] = {};
@@ -73,8 +73,8 @@ struct polygon_type
 
 struct object_type
 {
-	zp_size_t vertcount = 0;
-	zp_size_t polycount = 0;
+	z_size_t vertcount = 0;
+	z_size_t polycount = 0;
 	float scale = 0;
 	float x = 0, y = 0, z = 0;
 	float wx = 0, wy = 0, wz = 0;
@@ -96,7 +96,7 @@ struct object_type
 
 struct world_type
 {
-	zp_size_t objcount = 0;
+	z_size_t objcount = 0;
 	object_type* obj = 0;
 };
 

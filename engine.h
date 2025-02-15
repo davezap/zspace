@@ -5,14 +5,10 @@
 #include "LX.h"
 #include "engine_types.h"
 
-void deinit();
-void init();
-char* game_main(unsigned char* lpSurface);
-void render_debug(SDL_Renderer* renderer);
-
-void handle_key_event_down(SDL_Scancode key_code);
-void handle_key_event_up(SDL_Scancode key_code);
-
+bool init_world();
+void deinit_world();
+void main_loop(Colour<BYTE>* src_pixels);
+void render_text_overlay(SDL_Renderer* renderer);
 
 
 #endif /* ZSPACE_ENGINE_H */

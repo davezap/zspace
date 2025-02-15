@@ -4,8 +4,9 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_main.h>
 
-#include "world.h"
+#include "config.h"
 #include "engine.h"
+#include "helpers.h"
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -23,9 +24,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	renderer = SDL_CreateRenderer(window, NULL);
 	pixels = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBX8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    t1 = SDL_GetTicks();
+    init_world();
 
-    init();
+    t1 = SDL_GetTicks();
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
@@ -33,7 +34,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-    deinit();
+    deinit_world();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     /* SDL will clean up the window/renderer for us. */
@@ -65,16 +66,17 @@ SDL_AppResult SDL_AppIterate(void* appstate)
     void* data;
     int pitch;
     if (delta > SCREEN_TICKS_PER_FRAME) {
+        t1 = t2;
         bool ok = SDL_LockTexture(pixels, NULL, &data, &pitch);
         {
             // clear to black background
             //SDL_memset(data, 0, pitch * WIDTH);
-
+            
 
 
             SDL_memset4(data, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
-            game_main((unsigned char*)data);
-            t1 = t2;
+            main_loop((Colour<BYTE>*)data);
+            
 
 
         }
@@ -83,7 +85,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
         // copy to window
         SDL_RenderTexture(renderer, pixels, NULL, NULL);
 
-        render_debug(renderer);
+        render_text_overlay(renderer);
 
         SDL_RenderPresent(renderer);
     }

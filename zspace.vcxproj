@@ -154,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="engine.cpp" />
+    <ClCompile Include="helpers.cpp" />
     <ClCompile Include="LX.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Meshconvert\Mesh.cpp" />
@@ -162,10 +163,11 @@
   <ItemGroup>
     <ClInclude Include="engine.h" />
     <ClInclude Include="engine_types.h" />
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="LX.h" />
-    <ClInclude Include="math.h" />
+    <ClInclude Include="z_math.h" />
     <ClInclude Include="Meshconvert\Mesh.h" />
-    <ClInclude Include="world.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

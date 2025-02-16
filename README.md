@@ -44,7 +44,7 @@ Probably nothing! aside from a little tinkering.
 
 Follow the link to download the working demo, includes X64 binary's and required
 assets. Just extract files to a folder and run the executable.
-[downloaded here](https://204am.com/downloads/zspace_2025.zip) md5:c8424cb79b99030f9a4b0f63ae41bf33
+[downloaded here](https://204am.com/downloads/zspace_2025.zip) md5:d5f0e7a57b889f0abad21af9b3c08676
 
 This project requires the Microsoft Visual C++ Redistributable [downloaded here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) 
 

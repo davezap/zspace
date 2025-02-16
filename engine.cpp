@@ -5,18 +5,19 @@
 Copyright (c) 2002-2006, David Chamberlain - DaveZ@204am.com
 
 */
-
+#define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #define INITGUID
 #include <iostream>
 #include <sstream>
 #include <format>
 #include <SDL3/SDL.h>
+
+#include "z_types.h"
+#include "z_helpers.h"
 #include "config.h"
 #include "engine.h"
-#include "z_math.h"
-#include "engine_types.h"
-#include "helpers.h"
+
 
 
 void process_input(void);
@@ -542,10 +543,9 @@ void update_variables ( void )
 	if(camobj->v.x > 0) camobj->v.x-=static_cast<float>(0.01);
 
 	// Highlight 
-	g_textures[1].faceB = 255 * abs((int)camobj->thrust);
-	if (g_textures[0].faceB > 255) g_textures[0].faceB = 255;
-	g_textures[5].faceR = g_textures[0].faceR;
-	g_textures[5].faceG = 0;
+	g_textures[1].mat_diffuse.r = 255 * abs((int)camobj->thrust);
+	if (g_textures[1].mat_diffuse.r > 255) g_textures[1].mat_diffuse.r = 255;
+	g_textures[5].mat_diffuse = g_textures[1].mat_diffuse;
 	
 	camobj->thrust = 0;
 
@@ -996,12 +996,14 @@ inline void rotate_world(void)
 	vertex_type *curvertex;
 
 
-	float globalMatrix[4][4];
-	matrix_ident(globalMatrix);
+	//float globalMatrix[4][4];
+	Matrix44 globalMatrix;
+	globalMatrix.ident();
+
 	Vec3 ta = { -g_camera_angle.x, g_camera_angle.y, g_camera_angle.z };
-	matrix_rotate(globalMatrix, ta);
+	globalMatrix.rotate(ta);
 	
-	float obMatrix[4][4];
+	Matrix44 obMatrix;
 
 	float zover;
 
@@ -1013,13 +1015,13 @@ inline void rotate_world(void)
 		// Copy vert .. obj center
 		curobj->wposition = curobj->position;
 
-		matrix_ident(obMatrix);
+		obMatrix.ident();
 		if (a == 101) {
 			int a = 12;
 		}
 
-		matrix_rotate(obMatrix,curobj->angle);
-		matrix_translate(obMatrix,curobj->position);
+		obMatrix.rotate(curobj->angle);
+		obMatrix.translate(curobj->position);
 
 		for(b=0;b<curobj->vertcount;b++)
 		{
@@ -1028,17 +1030,17 @@ inline void rotate_world(void)
 			// Copy & Scale vert
 			curvertex->w = curvertex->l * curobj->scale;
 			// Rotate by object
-			matrix_transform(obMatrix, curvertex->w);
+			obMatrix.transform(curvertex->w);
 
 			// Rotate & translate to camera.
 			curvertex->w= curvertex->w - g_camera_position;
 
-			matrix_transform(globalMatrix,curvertex->w);
+			globalMatrix.transform(curvertex->w);
 		}
 
 		// Translate & Rotate & Project object center into screen space.
 		curobj->wposition = curobj->wposition - g_camera_position;
-		matrix_transform(globalMatrix,curobj->wposition);
+		globalMatrix.transform(curobj->wposition);
 		zover = (1/curobj->wposition.z) * g_view_distance;
 		curobj->wposition.x = (curobj->wposition.x * zover) + SCREEN_WIDTHh;
 		curobj->wposition.y = (curobj->wposition.y * zover) + SCREEN_HEIGHTh;
@@ -1059,13 +1061,13 @@ inline void rotate_world(void)
 			sprite_tmp->l = sprite_tmp->position - g_camera_position;
 		}
 
-		matrix_transform(globalMatrix,sprite_tmp->l);
+		globalMatrix.transform(sprite_tmp->l);
 	}
 	for(a = 0;a < sprites_front_cnt;a++)
 	{
 		sprite_tmp = &sprites_front[a];
 		sprite_tmp->l = sprite_tmp->position - g_camera_position;
-		matrix_transform(globalMatrix,sprite_tmp->l);
+		globalMatrix.transform(sprite_tmp->l);
 	}
 
 	// Cull some of the 3d mesh's
@@ -1223,9 +1225,9 @@ inline void mesh_lights()
 		Mesh::Material* curtexture = xloader.getTexture(i);
 
 		BYTE faceR = 0, faceG = 0, faceB = 0;
-		g_textures[i].faceR = static_cast<BYTE>(curtexture->diffuseColor.x * 255);
-		g_textures[i].faceG = static_cast<BYTE>(curtexture->diffuseColor.y * 255);
-		g_textures[i].faceB = static_cast<BYTE>(curtexture->diffuseColor.z * 255);
+		g_textures[i].mat_diffuse.r = curtexture->diffuseColor.x * 255.0f;
+		g_textures[i].mat_diffuse.g = curtexture->diffuseColor.y * 255.0f;
+		g_textures[i].mat_diffuse.b = curtexture->diffuseColor.z * 255.0f;
 		
 		if(curtexture->texture.length() > 0)
 		{
@@ -1269,9 +1271,6 @@ inline void mesh_lights()
 
 bool init_world(void)
 {
-
-	InitMath();
-	
 	g_textures_cnt=0;
 	mesh_lights();
 	
@@ -1832,10 +1831,9 @@ inline void render_tf()
 				SurfaceMultW = static_cast<float>(texture->bmWidth);
 			} else {
 				hasmap = false;
-				faceC.b = static_cast<BYTE>(texture->faceB * curpolygon->D);
-				faceC.g = static_cast<BYTE>(texture->faceG * curpolygon->D);
-				faceC.r = static_cast<BYTE>(texture->faceR * curpolygon->D);
-				faceC.a = NULL;
+				faceC.r = static_cast<BYTE>(texture->mat_diffuse.r * curpolygon->D);
+				faceC.g = static_cast<BYTE>(texture->mat_diffuse.g * curpolygon->D);
+				faceC.b = static_cast<BYTE>(texture->mat_diffuse.b * curpolygon->D);
 			}
 
 			

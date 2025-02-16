@@ -1,5 +1,6 @@
 #pragma once
 
+// release 370/ debug 120ms ish
 #define fround 
 #include <cmath>
 

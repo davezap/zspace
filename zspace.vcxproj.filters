@@ -30,9 +30,6 @@
     <ClCompile Include="Meshconvert\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="helpers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
@@ -47,13 +44,13 @@
     <ClInclude Include="z_math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="engine_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LX.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="helpers.h">
+    <ClInclude Include="z_helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="z_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

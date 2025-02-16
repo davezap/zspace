@@ -1,15 +1,50 @@
 
-#define _CRT_SECURE_NO_WARNINGS
+
+#pragma once
+
 
 #include <SDL3/SDL.h>
-#include "engine_types.h"
+#include "z_types.h"
 #include "config.h"
-#include "helpers.h"
-
-unsigned char g_keyboard_buffer[256];
+#include "z_helpers.h"
 
 
-bool load_texture(cTexture& MyTexture, const wchar_t* szFileName, bool force256)
+
+inline unsigned char g_keyboard_buffer[256];
+
+bool load_texture(cTexture& MyTexture, const wchar_t* szFileName, bool force256);
+inline Colour<BYTE> get_texture_pixel(cTexture& MyTexture, z_screen_t x, z_screen_t y);
+void handle_key_event_down(SDL_Scancode code);
+inline bool key_get_clear(SDL_Scancode code);
+inline bool key_get(SDL_Scancode code);
+void handle_key_event_up(SDL_Scancode code);
+
+
+
+
+
+inline bool key_get_clear(SDL_Scancode code)
+{
+	if (code > 0 && code < 256) {
+		if ((g_keyboard_buffer[code] & 0x02) == 0x02)
+		{
+			g_keyboard_buffer[code] |= 0x04;
+			g_keyboard_buffer[code] &= 0xFD;
+			return true;
+		}
+	}
+	return false;
+}
+
+inline bool key_get(SDL_Scancode code)
+{
+	if (code > 0 && code < 256 && g_keyboard_buffer[code] & 0x01) return true;
+	return false;
+}
+
+
+
+inline bool load_texture(cTexture& MyTexture, const wchar_t* szFileName, bool force256)
 {
 	char buff[255];
 
@@ -31,7 +66,7 @@ bool load_texture(cTexture& MyTexture, const wchar_t* szFileName, bool force256)
 		MyTexture.bmWidth = bm->w;
 		MyTexture.bmHeight = bm->h;
 		MyTexture.bmWidthBytes = MyTexture.bmWidth * 4;
-		MyTexture.faceB = 100;
+		MyTexture.mat_diffuse = { 100,0,0 };
 
 		MyTexture.hasAlpha = false;
 
@@ -46,7 +81,7 @@ bool load_texture(cTexture& MyTexture, const wchar_t* szFileName, bool force256)
 
 // https://wiki.libsdl.org/SDL3/SDL_Scancode
 
-void handle_key_event_down(SDL_Scancode code)
+inline void handle_key_event_down(SDL_Scancode code)
 {
 	if (code > 0 && code < 256) {
 		if ((g_keyboard_buffer[code] & 0x01) == 0x00) g_keyboard_buffer[code] |= 0x01;
@@ -57,7 +92,7 @@ void handle_key_event_down(SDL_Scancode code)
 
 
 
-void handle_key_event_up(SDL_Scancode code)
+inline void handle_key_event_up(SDL_Scancode code)
 {
 	if (code > 0 && code < 256)
 	{
@@ -67,3 +102,4 @@ void handle_key_event_up(SDL_Scancode code)
 			g_keyboard_buffer[code] &= 0xFE;
 	}
 }
+

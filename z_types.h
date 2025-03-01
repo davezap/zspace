@@ -1,13 +1,36 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <SDL3/SDL.h>
-
 #include "z_math.h"
+
+#include "json.hpp"
+
 
 typedef unsigned int z_size_t;
 typedef unsigned int z_screen_t;	// used for x an y coordinates in to textures and the display
 typedef unsigned char BYTE;
+
+
+struct UV
+{
+	float u = 0.0f, v = 0.0f;
+
+	void fromJSON(json::JSON& j)
+	{
+		if (j.at(0).JSONType() == json::JSON::Class::Integral)
+			u = static_cast<float>(j.at(0).ToInt());
+		else
+			u = static_cast<float>(j.at(0).ToFloat());
+
+		if (j.at(1).JSONType() == json::JSON::Class::Integral)
+			v = static_cast<float>(j.at(1).ToInt());
+		else
+			v = static_cast<float>(j.at(1).ToFloat());
+	}
+
+};
 
 
 // Vector struct and all related vector math.
@@ -85,7 +108,6 @@ struct Vec3 {
 	// dot product, used to get cosine angle between two vectors.
 	inline float cos_angle(const Vec3& other)
 	{
-		//return (x * other.x + y * other.y + z * other.z) / (sqrt(x * x + y * y + z * z) * sqrt(other.x * other.x + other.y * other.y + other.z * other.z));
 		return dot(other) / (length() * other.length());
 	}
 
@@ -98,17 +120,46 @@ struct Vec3 {
 
 	void inline roll360()
 	{
-		x = static_cast<int>(x) % 360;
-		y = static_cast<int>(y) % 360;
-		z = static_cast<int>(z) % 360;
+		x = fmod(x, 360.0f);
+		y = fmod(y, 360.0f);
+		z = fmod(z, 360.0f);
 	}
+	/*
+	inline void fromJSON(JSON& j)
+	{
+		x = static_cast<float>(j.at(0).ToFloat());
+		y = static_cast<float>(j.at(1).ToFloat());
+		z = static_cast<float>(j.at(2).ToFloat());
+	}
+	*/
+	void fromJSON(json::JSON& j)
+	{
+		if (j.at(0).JSONType() == json::JSON::Class::Integral)
+			x = static_cast<float>(j.at(0).ToInt());
+		else
+			x = static_cast<float>(j.at(0).ToFloat());
 
+		if (j.at(1).JSONType() == json::JSON::Class::Integral)
+			y = static_cast<float>(j.at(1).ToInt());
+		else
+			y = static_cast<float>(j.at(1).ToFloat());
+
+		if (j.at(2).JSONType() == json::JSON::Class::Integral)
+			z = static_cast<float>(j.at(2).ToInt());
+		else
+			z = static_cast<float>(j.at(2).ToFloat());
+	}
 
 };
 
 
 struct Matrix44 {
 	float m[4][4];
+
+	Matrix44()
+	{
+		ident();
+	}
 
 	inline void ident()
 	{
@@ -142,6 +193,12 @@ struct Matrix44 {
 	{
 		float rmat[4][4];
 
+		// X
+		rmat[0][0] = 1;		rmat[0][1] = 0;				rmat[0][2] = 0;				rmat[0][3] = 0;
+		rmat[1][0] = 0;		rmat[1][1] = MyCos(Ang.x);	rmat[1][2] = MySin(Ang.x);	rmat[1][3] = 0;
+		rmat[2][0] = 0;		rmat[2][1] = -MySin(Ang.x);	rmat[2][2] = MyCos(Ang.x);	rmat[2][3] = 0;
+		rmat[3][0] = 0;		rmat[3][1] = 0;				rmat[3][2] = 0;				rmat[3][3] = 1;
+		multiply(rmat);
 		// Z
 		rmat[0][0] = MyCos(Ang.z);	rmat[0][1] = MySin(Ang.z);	rmat[0][2] = 0;		rmat[0][3] = 0;
 		rmat[1][0] = -MySin(Ang.z);	rmat[1][1] = MyCos(Ang.z);	rmat[1][2] = 0;		rmat[1][3] = 0;
@@ -156,12 +213,8 @@ struct Matrix44 {
 		rmat[3][0] = 0;				rmat[3][1] = 0;		rmat[3][2] = 0;				rmat[3][3] = 1;
 		multiply(rmat);
 
-		// X
-		rmat[0][0] = 1;		rmat[0][1] = 0;				rmat[0][2] = 0;				rmat[0][3] = 0;
-		rmat[1][0] = 0;		rmat[1][1] = MyCos(Ang.x);	rmat[1][2] = MySin(Ang.x);	rmat[1][3] = 0;
-		rmat[2][0] = 0;		rmat[2][1] = -MySin(Ang.x);	rmat[2][2] = MyCos(Ang.x);	rmat[2][3] = 0;
-		rmat[3][0] = 0;		rmat[3][1] = 0;				rmat[3][2] = 0;				rmat[3][3] = 1;
-		multiply(rmat);
+
+
 	}
 
 	inline void translate(Vec3& p)
@@ -193,7 +246,6 @@ struct Colour {
 
 		T val;
 	};
-	
 
 	inline Colour<T> operator*(float s) const { return { r * s, g * s, b * s }; }
 
@@ -201,6 +253,15 @@ struct Colour {
 		r *= t;
 		g *= t;
 		b *= t;
+		a *= t;
+		return *this;
+	}
+
+	inline Colour<T>& operator*(float t) {
+		r *= t;
+		g *= t;
+		b *= t;
+		a *= t;
 		return *this;
 	}
 
@@ -210,82 +271,168 @@ struct Colour {
 		return *this *= 1 / t;
 	}
 
+	inline void operator+=(Colour<T>& c) {
+		r += c.r;
+		g += c.g;
+		b += c.b;
+		a += c.a;
+	}
+
+
+	inline float luminance()
+	{
+		return 0.299 * r + 0.587 * g + 0.114 * b;
+		//return std::max(r, std::max(b, g));
+	}
+
 	inline void fromFloatC(Colour<float> fcolour)
 	{
-		r = static_cast <BYTE>(fcolour.r);
-		g = static_cast <BYTE>(fcolour.g);
-		b = static_cast <BYTE>(fcolour.b);
-		//a = static_cast <BYTE>(fcolour.a);
+		r = static_cast <BYTE>(fcolour.r * 255);
+		g = static_cast <BYTE>(fcolour.g * 255);
+		b = static_cast <BYTE>(fcolour.b * 255);
+		a = static_cast <BYTE>(fcolour.a * 255);
+	}
+
+	inline Vec3 toNormal() const {
+		return {
+			(static_cast<float>(r) - 255) / 127,
+			(static_cast<float>(g) - 255) / 127,
+			(static_cast<float>(b) - 255) / 127
+		};
+	}
+
+	inline bool is_saturated() {
+		if constexpr (std::is_floating_point_v<T>) {
+			return (r == 1 && g == 0 && b == 1);
+		}
+		else {
+			return (r == 255 && g == 0 && b == 255);
+		}
 	}
 
 	inline void limit_rgba() {
 		if (r < 0) r = 0;
 		if (g < 0) g = 0;
 		if (b < 0) b = 0;
-		//if (a < 0) a = 0;
-		if (r > 255) r = 255;
-		if (g > 255) g = 255;
-		if (b > 255) b = 255;
-		//if (a > 255) a = 255;
+		if (a < 0) a = 0;
+		if constexpr (std::is_floating_point_v<T>) {
+			if (r > 1 || g > 1 || b > 1) {
+				r = 1;
+				g = 0;
+				b = 1;
+			}
+			//if (g > 1) g = 0;
+			//if (b > 1) b = 1;
+			if (a > 1) a = 1;
+		}
+		else {
+			if (r > 255 || g > 255 || b > 255) {
+				r = 255;
+				g = 0;
+				b = 255;
+			}
+			if (a > 255) a = 255;
+		}
+	}
 
+
+	void fromJSON(json::JSON& j)
+	{
+		if (j.at(0).JSONType() == json::JSON::Class::Integral)
+			r = static_cast<float>(j.at(0).ToInt());
+		else
+			r = static_cast<float>(j.at(0).ToFloat());
+
+		if (r == -1) {
+			if(typeid(T) == typeid(BYTE))
+			{
+				*this = { 255, 178, 178, 178 };
+			}
+			else {
+				*this = { 1, 0.7f , 0.7f , 0.7f };	// This is the default defuse colour.
+			}
+			
+			return;
+		}
+
+		if (j.at(1).JSONType() == json::JSON::Class::Integral)
+			g = static_cast<float>(j.at(1).ToInt());
+		else
+			g = static_cast<float>(j.at(1).ToFloat());
+
+		if (j.at(2).JSONType() == json::JSON::Class::Integral)
+			b = static_cast<float>(j.at(2).ToInt());
+		else
+			b = static_cast<float>(j.at(2).ToFloat());
+
+		if (j.at(3).JSONType() == json::JSON::Class::Integral)
+			a = static_cast<float>(j.at(3).ToInt());
+		else
+			a = static_cast<float>(j.at(3).ToFloat());
 	}
 };
 
 
-struct uv_type
-{
-	float u = 0.0f, v = 0.0f;
-};
 
 // Our object structure defined either a plane or sphere. 
-struct Object
+struct ZRay_Object
 {
 	z_size_t idx;
 	int pType;
 	Vec3 s;
 	Vec3 dA;
+	float dA_len;
 	Vec3 dB;
+	float dB_len;
+	Vec3 dAu;
+	Vec3 dBu;
 	Colour<float> colour;
 	Vec3 n;
+	Vec3 nu;
 	long SurfaceTexture;
 	float SurfaceMultW;
 	float SurfaceMultH;
 	float radius_squared;
+	bool casts_shadows = true;
+	z_size_t linked_light = 0;
 
-	inline float InterPlane(Vec3 &o, Vec3 &r, Vec3 &out_intersect, uv_type &uv)
+	inline void pre_compute() {
+		dA_len = dA.length();
+		dAu = dA.unitary();
+		dB_len = dB.length();
+		dBu = dB.unitary();
+		n = dA.cross_product(dB);
+		nu = n.unitary();
+		
+	}
+
+	inline float InterPlane(Vec3 &o, Vec3 &r, Vec3 &out_intersect, UV &uv)
 	{
 		float D = r.dot(n);
 
-		if (D > 0) {
+		if (D < 0) return 0;
+		Vec3 sr = s-o;
+		Vec3 tcross = sr.cross_product(r);  // scalar triple product
+		float D2 = dB.dot(tcross);			
+		if ((D2 < 0) || (D2 > D)) return 0;
+		float D3 = -dA.dot(tcross);
 
-			Vec3 sr = s - r;
-			
-			Vec3 tcross = sr.cross_product(r);  // scalar triple product for plane height
-			float D2 = dB.dot(tcross);
-
+		if (D3 >= 0 && D3 <= D) {
 			uv.u = D2 / D;
-			if ((uv.u >= 0) && (uv.u <= 1)) {
-				float D3 = -dA.dot(tcross);
-
-				uv.v = D3 / D;
-
-				if ((uv.v >= 0) && (uv.v <= 1)) {
-
-					float D1 = sr.dot(n);
-					float L = D1 / D;
-					out_intersect.x = r.x + r.x * L;
-					out_intersect.y = r.y + r.y * L;
-					out_intersect.z = r.z + r.z * L;
-					return -D;
-				}
-			}
+			uv.v = D3 / D;
+			float L = sr.dot(n) / D;
+			out_intersect.x = o.x + r.x * L;
+			out_intersect.y = o.y + r.y * L;
+			out_intersect.z = o.z + r.z * L;
+			return L;
 		}
-		out_intersect = { 0,0,0 };
+
+		//out_intersect = { 0,0,0 };
 		return 0;
 	}
 
 
-	inline float InterSphere(const Vec3& origin, const Vec3& dir, const float& an_Y, Vec3& out_intersect, uv_type& uv)
+	inline float InterSphere(const Vec3& origin, const Vec3& dir, const float& an_Y, Vec3& out_intersect, UV& uv)
 	{
 		static bool first_hit = false;
 		Vec3 intercept;
@@ -329,7 +476,7 @@ struct Object
 
 		//intercept = unit_vector(intercept);
 		float qx = intercept.x, qy = intercept.y, qz = intercept.z;
-		worldToLocal(intercept.x, intercept.y, intercept.z, an_Y * 0.0174533, qx, qy, qz);
+		worldToLocal(intercept.x, intercept.y, intercept.z, 0.5*an_Y * 0.0174533, qx, qy, qz);
 
 
 
@@ -344,7 +491,7 @@ struct Object
 
 struct Camera
 {
-	Object screen;// a plane representing the screen surface.
+	ZRay_Object screen;// a plane representing the screen surface.
 	Vec3 fp;	// focal point behind the screen where you are sitting.
 };
 
@@ -361,9 +508,15 @@ struct Light
 	float FuzFactor;// As percentage 0-1
 
 	long LastPolyHit;	// This is for an optimization that was not used, it is being recorded.
+
+	Light()
+	{
+
+	}
+
 };
 
-struct vertex_type
+struct Vertex
 {
 	Vec3 l = { 0, 0, 0 };
 	Vec3 w = { 0,0,0 };
@@ -371,14 +524,14 @@ struct vertex_type
 
 
 
-struct polygon_type
+struct Poly
 {
 	Vec3 n = { 0,0,0 };
 	float D = 0.0f;
 	z_size_t SurfaceTexture = 0;
 
-	vertex_type* vertex[3] = {};
-	uv_type uv[3] = {};
+	Vertex* vertex[3] = {};
+	UV uv[3] = {};
 
 	int visable = 0;
 
@@ -403,11 +556,11 @@ struct polygon_type
 };
 
 
-struct cTexture
+struct Texture
 {
-	std::wstring filename;
-	SDL_Surface* surface = NULL;
-	Colour<BYTE>* pixels = NULL;
+	std::string filename;
+	Colour<BYTE>* pixels_colour = NULL;
+	Vec3* pixels_normal = NULL;
 	unsigned char bmBitsPixel = 0;
 	unsigned char bmBytesPixel = 0;
 	uint16_t bmHeight = 0;
@@ -421,16 +574,20 @@ struct cTexture
 	{
 		x %= bmWidth;
 		y %= bmHeight;
-		return pixels[x + y * bmWidth];
+		return pixels_colour[x + y * bmWidth];
+	}
+
+	inline Vec3 get_normal(z_screen_t x, z_screen_t y)
+	{
+		if (pixels_normal == NULL) return { 0,0,0 };
+		x %= bmWidth;
+		y %= bmHeight;
+		return pixels_normal[x + y * bmWidth];
 	}
 };
 
 
-struct rows_cols {
-	BYTE rows = 0, cols = 0;
-};
-
-struct sprite
+struct Sprite
 {
 	Vec3 position = { 0,0,0 };
 	Vec3 l = { 0,0,0 };
@@ -445,12 +602,12 @@ struct sprite
 	int animation_start = 0;
 	int animation_len = 0;
 	float alpha = 0.0f;
-	cTexture* boTexture = 0;
+	z_size_t boTexture = 0;
 };
 
 
 
-struct object_type
+struct ZSpace_Object
 {
 	z_size_t vertcount = 0;
 	z_size_t polycount = 0;
@@ -466,8 +623,8 @@ struct object_type
 	float mass = 1;
 	float bounds = 1;
 	bool shoot = false;
-	polygon_type* polygon = 0;
-	vertex_type* vertex = 0;
+	Poly* polygon = nullptr;
+	Vertex* vertex = nullptr;
 
 	bool hidden = false;
 };
@@ -475,17 +632,16 @@ struct object_type
 
 
 
-struct world_type
+struct ZSpace_World
 {
-	z_size_t objcount = 0;
-	object_type* obj = 0;
+	std::vector<std::unique_ptr<ZSpace_Object>> obj;
 };
 
 
 
 
 
-struct clip_type
+struct Clip
 {
 	Vec3 position = { 0,0,0 };
 	float x1 = 0.0f, y1 = 0.0f, z1 = 0.0f;
@@ -493,9 +649,9 @@ struct clip_type
 	float u1 = 0.0f, v1 = 0.0f;
 };
 
-struct cliped_polygon_type
+struct Clipped_Poly
 {
 	unsigned int vertcount = 0;
-	clip_type vertex[8] = {};
+	Clip vertex[8] = {};
 };
 

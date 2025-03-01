@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine.h" />
+    <ClInclude Include="json.hpp" />
     <ClInclude Include="LX.h" />
     <ClInclude Include="z_helpers.h" />
     <ClInclude Include="z_math.h" />

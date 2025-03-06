@@ -1083,16 +1083,19 @@ inline void rotate_world(void)
 		{
 			//debug3++;
 
-			curobj->hidden = false;
+			
+			
 			for(b=0;b<curobj->polycount;b++)
 			{
+				if (curobj->hidden == true) curobj->polygon[b].visable = 0;
 				if(curobj->polygon[b].visable==0)
 				{
 					curobj->polygon[b].compute_normal();
-					if(curobj->polygon[b].D<0) curobj->polygon[b].visable=int(10 * -curobj->polygon[b].D);
+					if(curobj->polygon[b].D < -0.2 ) curobj->polygon[b].visable = static_cast<unsigned int>(5 * -curobj->polygon[b].D);
 				} else curobj->polygon[b].visable--;
-
 			}
+			curobj->hidden = false;
+
 		} else {
 			curobj->hidden = true;
 		}

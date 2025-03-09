@@ -10,20 +10,20 @@ HRESULT LoadFromOBJ(const wchar_t* szFilename,
 
 
 LX::LX() {
-	cnt_meshes = 0;
-	cnt_materials = 0;
-	attr_offsets[0] = 0;
-	materials[0] = 0;
-	meshes[0] = 0;
+	attr_offsets.clear();
+	materials.clear();
+	meshes.clear();
 }
 
 LX::~LX() {
+	/*
 	for (z_size_t i = 0; i < cnt_meshes; ++i) {
-		if (meshes[i]) delete meshes[i];
+	//	delete meshes[i];
 	}
 	for (z_size_t i = 0; i < cnt_materials; ++i) {
-		if (materials[i]) delete materials[i];
+	//	if (materials[i]) delete materials[i];
 	}
+	*/
 }
 
 void LX::loadFile(const wchar_t* szFilename)
@@ -32,12 +32,12 @@ void LX::loadFile(const wchar_t* szFilename)
 	std::vector<Mesh::Material> inMaterial;
 	HRESULT hr = LoadFromOBJ(szFilename, inMesh, inMaterial, false, false);
 
-	attr_offsets[cnt_meshes] = (z_size_t)inMaterial.size();
-	meshes[cnt_meshes++] = inMesh.release();
+	attr_offsets[meshes.size()] = (z_size_t)inMaterial.size();
+	meshes.push_back(inMesh.release());
 
 	for (const auto& mat : inMaterial)
 	{
-		materials[cnt_materials++] = new Mesh::Material(mat);
+		materials.push_back(new Mesh::Material(mat));
 
 	}
 }
@@ -54,7 +54,7 @@ void LX::clear()
 
 z_size_t LX::getObjectCount() const
 {
-	return cnt_meshes;
+	return meshes.size();
 }
 
 Mesh* LX::getObject(z_size_t idx) const
@@ -64,7 +64,7 @@ Mesh* LX::getObject(z_size_t idx) const
 
 z_size_t LX::getTextureCount() const
 {
-	return cnt_materials;
+	return materials.size();
 }
 
 z_size_t LX::getAttrOffset(z_size_t lim) const
@@ -73,7 +73,8 @@ z_size_t LX::getAttrOffset(z_size_t lim) const
 	z_size_t idx = 0;
 	while (idx < lim)
 	{
-		n += attr_offsets[idx++];
+		n += attr_offsets.at(idx);
+		idx++;
 	}
 	return n;
 }

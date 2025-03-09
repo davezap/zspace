@@ -1,6 +1,8 @@
 #ifndef ZSPACE_LX_TYPES_H
 #define ZSPACE_LX_TYPES_H
 
+#include <vector>
+#include <map>
 #include "z_types.h"
 #include "Meshconvert\Mesh.h"
 
@@ -8,11 +10,9 @@
 class LX {
 
 private:
-	unsigned int cnt_meshes;
-	unsigned int cnt_materials;
-	Mesh* meshes[200];
-	Mesh::Material* materials[300];
-	unsigned int attr_offsets[300];
+	std::vector<Mesh*> meshes;
+	std::vector <Mesh::Material*> materials;
+	std::map<size_t, size_t> attr_offsets;
 
 public:
 	LX();

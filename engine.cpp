@@ -23,7 +23,7 @@ void update_variables(void);
 void go_boom(Vec3 pos, bool cast_shrap, bool force);
 void go_shrapnel(Vec3 pos, unsigned char sh_type, unsigned int scnt);
 long get_free_sprite(bool force);
-void render_background_sprites(Sprite objs[], unsigned int& objCnt);
+void render_background_sprites(void);
 void render_foreground_sprites(void);
 void render_tf();
 void rotate_world(void);
@@ -69,12 +69,8 @@ const unsigned int SCREEN_HEIGHTh = SCREEN_HEIGHT / 2;
 
 
 
-
-Sprite* sprites_back = 0;
-z_size_t sprites_back_cnt = 0;
-Sprite* sprites_front = 0;
-z_size_t sprites_front_cnt = 0;
-Sprite* sprite_tmp = 0;
+std::vector<Sprite> sprites_back;
+std::vector<Sprite> sprites_front;
 
 long SelTxr = 0;
 long chk_TextureShow = 0;
@@ -180,7 +176,7 @@ void main_loop(Colour<BYTE>* src_pixels)
 		g_total_faces = 0;
 		g_rendered_faces = 0;
 
-		render_background_sprites(sprites_back, sprites_back_cnt);
+		render_background_sprites();
 		render_tf();
 		render_foreground_sprites();
 	
@@ -209,7 +205,7 @@ void render_text_overlay(SDL_Renderer* renderer)
 	g_fps_Time = SDL_GetTicks();
 	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 200);
 
-	std::string debug_buffer = std::format("Rendered Sprites {}/{} - Objects {}/{} - Faces {}/{}", g_rendered_sprites, sprites_back_cnt + sprites_front_cnt, g_rendered_objects, 1, g_rendered_faces, g_total_faces); //g_world.obj.size()
+	std::string debug_buffer = std::format("Rendered Sprites {}/{} - Objects {}/{} - Faces {}/{}", g_rendered_sprites, sprites_back.size() + sprites_front.size(), g_rendered_objects, 1, g_rendered_faces, g_total_faces); //g_world.obj.size()
 	SDL_RenderDebugText(renderer, 0, 5, debug_buffer.c_str());
 
 	debug_buffer = std::format("{} fps, render {} ms", 1000 / tmr, g_timer_render);
@@ -291,7 +287,7 @@ void go_boom(Vec3 pos, bool cast_shrap,bool force)
 	
 	Vec3 tvec;
 
-	for(z_size_t tmp=0;tmp < sprites_front_cnt;tmp++)
+	for(z_size_t tmp=0;tmp < sprites_front.size();tmp++)
 	{
 
 		if(sprites_front[tmp].visable)
@@ -326,8 +322,8 @@ void go_boom(Vec3 pos, bool cast_shrap,bool force)
 long get_free_sprite (bool force)
 {
 	int smLiveTime = 10000;
-	z_size_t smObj = -1;
-	for(z_size_t tmp=0;tmp < sprites_front_cnt;tmp++)
+	long smObj = -1;
+	for(z_size_t tmp=0;tmp < sprites_front.size();tmp++)
 	{
 		if(sprites_front[tmp].visable == false)
 		{
@@ -339,6 +335,12 @@ long get_free_sprite (bool force)
 			smObj = tmp;
 			smLiveTime = sprites_front[tmp].liveTime;
 		}
+	}
+
+	if (smObj == -1) {
+		Sprite sp;
+		sprites_front.push_back(sp);
+		smObj = sprites_front.size() - 1;
 	}
 
 	return smObj;
@@ -397,8 +399,9 @@ void update_variables ( void )
 		camobj->shoot = false;
 		float ay = camobj->angle.y;
 		z_size_t smObj = get_free_sprite(true);
-		sprite_tmp = &sprites_front[smObj];
-		if(smObj==-1) return;
+		if (smObj == -1) return;
+
+		Sprite* sprite_tmp = &sprites_front[smObj];
 		//debug3 = sprites_front[tmp].visable;
 		sprite_tmp->visable = true;
 		sprite_tmp->position =  camobj->position;
@@ -492,9 +495,9 @@ void update_variables ( void )
 		// does particle collision..
 		if(ob!=g_cam_object_idx)
 		{
-			for(z_size_t a = 0;a < sprites_front_cnt;a++)
+			for(z_size_t a = 0;a < sprites_front.size();a++)
 			{
-				sprite_tmp = &sprites_front[a];
+				Sprite* sprite_tmp = &sprites_front[a];
 				if(sprite_tmp->visable == true && sprite_tmp->animation_start == g_shoot_sprite_idx)
 				{
 					tvector = { curobj->position.x - sprite_tmp->position.x, 0, curobj->position.z - sprite_tmp->position.z };
@@ -583,9 +586,9 @@ void update_variables ( void )
 	g_camera_position.y = camobj->position.y - (g_camera_position.y * MySin(g_camera_angle.x));
 
 	
-	for(z_size_t a = 0;a < sprites_front_cnt;a++)
+	for(z_size_t a = 0;a < sprites_front.size();a++)
 	{
-		sprite_tmp = &sprites_front[a];
+		Sprite* sprite_tmp = &sprites_front[a];
 		if(sprite_tmp->visable == false) continue;
 		
 		
@@ -622,7 +625,7 @@ void update_variables ( void )
 
 
 
-inline void render_background_sprites(Sprite objs[], unsigned int &objCnt)
+inline void render_background_sprites()
 {
 
 	//return;
@@ -640,35 +643,34 @@ inline void render_background_sprites(Sprite objs[], unsigned int &objCnt)
 	//unsigned int sprite_width;
 	//unsigned int sprite_height;
 
-	for(z_size_t tmp=0;tmp<objCnt;tmp++)
+	for(auto sprite_tmp : sprites_back)
 	{
-		sprite_tmp = &objs[tmp];
-		
-		if(!sprite_tmp->visable) continue;
+	
+		if(!sprite_tmp.visable) continue;
 
-		if(sprite_tmp->p)
+		if(sprite_tmp.p)
 		{
-			sprite_tmp->l.z = 1/sprite_tmp->l.z;
-			sprite_tmp->l.x = ((sprite_tmp->l.x) * sprite_tmp->l.z * g_view_distance) + SCREEN_WIDTHh;
-			sprite_tmp->l.y = ((sprite_tmp->l.y) * sprite_tmp->l.z * g_view_distance) + SCREEN_HEIGHTh;
+			sprite_tmp.l.z = 1/sprite_tmp.l.z;
+			sprite_tmp.l.x = ((sprite_tmp.l.x) * sprite_tmp.l.z * g_view_distance) + SCREEN_WIDTHh;
+			sprite_tmp.l.y = ((sprite_tmp.l.y) * sprite_tmp.l.z * g_view_distance) + SCREEN_HEIGHTh;
 		} else {
-			sprite_tmp->l.x = sprite_tmp->position.x + SCREEN_WIDTHh;
-			sprite_tmp->l.y = sprite_tmp->position.y + SCREEN_HEIGHTh;
+			sprite_tmp.l.x = sprite_tmp.position.x + SCREEN_WIDTHh;
+			sprite_tmp.l.y = sprite_tmp.position.y + SCREEN_HEIGHTh;
 		}
-		if(sprite_tmp->l.z < 0) continue;
-		if(sprite_tmp->l.x < 0 || sprite_tmp->l.x>SCREEN_WIDTH || sprite_tmp->l.y < 0 || sprite_tmp->l.y>SCREEN_HEIGHT) continue;
+		if(sprite_tmp.l.z < 0) continue;
+		if(sprite_tmp.l.x < 0 || sprite_tmp.l.x>SCREEN_WIDTH || sprite_tmp.l.y < 0 || sprite_tmp.l.y>SCREEN_HEIGHT) continue;
 		//float tsc;
 		//if(sprite_tmp->l.y > SCREEN_HEIGHT && sprite_tmp->l.y < 0 && sprite_tmp->l.x > SCREEN_WIDTH && sprite_tmp->l.x < 0) continue;
 
 
 		//continue;
 		// Get pointer to this background objects texture
-		Texture *ThisTexture = &g_textures[sprite_tmp->boTexture];
+		Texture *ThisTexture = &g_textures[sprite_tmp.boTexture];
 		MyTextureP = ThisTexture->pixels_colour;
 
 		// Get video offset of this sprite
-		videoXOff = static_cast<int>(sprite_tmp->l.x - ThisTexture->bmWidth / 2);
-		videoYOff = static_cast<int>(sprite_tmp->l.y - ThisTexture->bmHeight / 2);
+		videoXOff = static_cast<int>(sprite_tmp.l.x - ThisTexture->bmWidth / 2);
+		videoYOff = static_cast<int>(sprite_tmp.l.y - ThisTexture->bmHeight / 2);
 
 		h_run_distance = ThisTexture->bmWidth + videoXOff; //  + CamX
 
@@ -718,7 +720,7 @@ inline void render_background_sprites(Sprite objs[], unsigned int &objCnt)
 		videoXOffb = videoXOff;
 		videoXOff++;
 
-		if(sprite_tmp->zbuffer)
+		if(sprite_tmp.zbuffer)
 		{
 			g_video_buffer = &g_video_bufferB[(0 + videoYOff) * SCREEN_WIDTH + videoXOff];
 			pZBuffer = &ZBuffer[(0 + videoYOff) * SCREEN_WIDTH + videoXOffb];	
@@ -732,7 +734,7 @@ inline void render_background_sprites(Sprite objs[], unsigned int &objCnt)
 				{ 
 					if(MyTextureP->r + MyTextureP->g + MyTextureP->b)
 					{
-						if((qqqc = sprite_tmp->l.z+g_zbuffer_page) > pZBuffer[0])
+						if((qqqc = sprite_tmp.l.z+g_zbuffer_page) > pZBuffer[0])
 						{
 							pZBuffer[0] = qqqc;	
 							g_video_buffer = MyTextureP;
@@ -808,7 +810,7 @@ inline void render_foreground_sprites(void)
 	int x = 0;
 	Texture *ThisTexture;
 
-	for(z_size_t tmp=0;tmp<sprites_front_cnt;tmp++)
+	for(z_size_t tmp=0;tmp<sprites_front.size();tmp++)
 	{
 	
 		obj = &sprites_front[tmp];
@@ -1049,11 +1051,10 @@ inline void rotate_world(void)
 	
 	// Transform Sprites./////////////////////////////////////
 
-	Sprite *sprite_tmp;
-
-	for(a = 0;a < sprites_back_cnt;a++)
+	for (a = 0; a < sprites_back.size(); a++)
 	{
-		sprite_tmp = &sprites_back[a];
+		Sprite* sprite_tmp = &sprites_back[a];
+
 		if(sprite_tmp->distance_infinity)
 		{
 			sprite_tmp->l = sprite_tmp->position;
@@ -1063,9 +1064,9 @@ inline void rotate_world(void)
 
 		globalMatrix.transform(sprite_tmp->l);
 	}
-	for(a = 0;a < sprites_front_cnt;a++)
+	for(a = 0;a < sprites_front.size();a++)
 	{
-		sprite_tmp = &sprites_front[a];
+		Sprite* sprite_tmp = &sprites_front[a];
 		sprite_tmp->l = sprite_tmp->position - g_camera_position;
 		globalMatrix.transform(sprite_tmp->l);
 	}
@@ -1292,43 +1293,45 @@ bool init_world(void)
 
 	//load_texture_alpha(g_textures[g_textures_cnt-1], L"earth_alpha.bmp",false);
 	
-	sprites_back_cnt = 500;
-	sprites_back = new Sprite[sprites_back_cnt];
+	sprites_back.clear();
 	
 	float an = 0;
 	float anb = 0;
-	for(z_size_t tmp=0;tmp < sprites_back_cnt;tmp++)
+	for(z_size_t tmp=0;tmp < 500;tmp++)
 	{
+		Sprite sprite_tmp;
 		an = static_cast<float>(rand()%359);
 		anb= static_cast<float>(rand()%359);
 		dbg(L"COS %f", MyCos(an));
-		sprites_back[tmp].position.x =  MyCos(anb) * MyCos(an) * 20000;
-		sprites_back[tmp].position.z =  MyCos(anb) * MySin(an) * 20000;
-		sprites_back[tmp].position.y =  MySin(anb) * 20000;
-		sprites_back[tmp].v.x = 0;
-		sprites_back[tmp].v.y = 0;
-		sprites_back[tmp].v.z = 0;
-		sprites_back[tmp].p = true;
-		sprites_back[tmp].boTexture = g_textures.size() - 2;
-		sprites_back[tmp].visable = true;
-		sprites_back[tmp].distance_infinity = true;
-		sprites_back[tmp].zbuffer = false;
-		sprites_back[tmp].scale = false;
-		sprites_back[tmp].alpha = 1;
-	}
-	sprites_back[sprites_back_cnt-2].position.x =  20000;
-	sprites_back[sprites_back_cnt-2].position.z =  10000;
-	sprites_back[sprites_back_cnt-2].position.y =  20000;
-	sprites_back[sprites_back_cnt-2].p = true;
-	sprites_back[sprites_back_cnt-2].boTexture = g_textures.size()-1;
-	sprites_back[sprites_back_cnt-2].visable = true;
-	sprites_back[sprites_back_cnt-2].distance_infinity = false;
-	sprites_back[sprites_back_cnt-2].zbuffer = false;
-	sprites_back[sprites_back_cnt-2].scale = false;
-	sprites_back[sprites_back_cnt-2].alpha = 1;
+		sprite_tmp.position.x =  MyCos(anb) * MyCos(an) * 20000;
+		sprite_tmp.position.z =  MyCos(anb) * MySin(an) * 20000;
+		sprite_tmp.position.y =  MySin(anb) * 20000;
+		sprite_tmp.v.x = 0;
+		sprite_tmp.v.y = 0;
+		sprite_tmp.v.z = 0;
+		sprite_tmp.p = true;
+		sprite_tmp.boTexture = g_textures.size() - 2;
+		sprite_tmp.visable = true;
+		sprite_tmp.distance_infinity = true;
+		sprite_tmp.zbuffer = false;
+		sprite_tmp.scale = false;
+		sprite_tmp.alpha = 1;
 
-	sprites_front_cnt=5000;
-	sprites_front = new Sprite[sprites_front_cnt];	
+		sprites_back.push_back(sprite_tmp);
+	}
+	sprites_back[sprites_back.size()-2].position.x =  20000;
+	sprites_back[sprites_back.size()-2].position.z =  10000;
+	sprites_back[sprites_back.size()-2].position.y =  20000;
+	sprites_back[sprites_back.size()-2].p = true;
+	sprites_back[sprites_back.size()-2].boTexture = g_textures.size()-1;
+	sprites_back[sprites_back.size()-2].visable = true;
+	sprites_back[sprites_back.size()-2].distance_infinity = false;
+	sprites_back[sprites_back.size()-2].zbuffer = false;
+	sprites_back[sprites_back.size()-2].scale = false;
+	sprites_back[sprites_back.size()-2].alpha = 1;
+
+
+	sprites_front.clear();
 
 	
 	load_texture(texture, "shot_00.bmp");
@@ -1347,21 +1350,25 @@ bool init_world(void)
 		b += 4;
 	}
 
-	for(z_size_t tmp=0;tmp < sprites_front_cnt;tmp++)
+	for(z_size_t tmp=0;tmp < 5000;tmp++)
 	{
-		sprites_front[tmp].position = { 0, 0, static_cast<float>(tmp) };
-		sprites_front[tmp].v = { 0,0,0 };
-		sprites_front[tmp].p = true;
-		sprites_front[tmp].liveTime = 0;
-		sprites_front[tmp].visable = false;
-		sprites_front[tmp].distance_infinity = false;
-		sprites_front[tmp].zbuffer = true;
-		sprites_front[tmp].scale = true;
-		sprites_front[tmp].oscale = 0.3f;
-		sprites_front[tmp].animation_len = 1;
-		//sprites_front[tmp].animation_len = TextureCnt-1;
-		sprites_front[tmp].boTexture = g_textures.size() - 1;
-		sprites_front[tmp].alpha = 0.5;
+		Sprite sprite_tmp;
+
+		sprite_tmp.position = { 0, 0, static_cast<float>(tmp) };
+		sprite_tmp.v = { 0,0,0 };
+		sprite_tmp.p = true;
+		sprite_tmp.liveTime = 0;
+		sprite_tmp.visable = false;
+		sprite_tmp.distance_infinity = false;
+		sprite_tmp.zbuffer = true;
+		sprite_tmp.scale = true;
+		sprite_tmp.oscale = 0.3f;
+		sprite_tmp.animation_len = 1;
+		//sprite_tmp.animation_len = TextureCnt-1;
+		sprite_tmp.boTexture = g_textures.size() - 1;
+		sprite_tmp.alpha = 0.5;
+
+		sprites_front.push_back(sprite_tmp);
 	}
 	g_shoot_sprite_idx = g_textures.size() - 3;
 	g_shot_sprite_len = 3;
@@ -1458,8 +1465,6 @@ bool init_world(void)
 
 void deinit_world(void)
 {
-	delete [] sprites_back;
-	delete [] sprites_front;
 
 	for(auto texture : g_textures)
 	{
@@ -1807,7 +1812,7 @@ inline void render_tf()
 		{
 			curpolygon = &curobj->polygon[poly_cnt];// Pointer to this polygon.
 
-			if(curpolygon->visable>0) continue;	// Calculated in rotate world. >0 indicates not visable.
+			if(curpolygon->visable>0) continue;	// Calculated in rotate world. >0 indicates not visible.
 
 			if (obj_cnt == 1) {
 				int a = 0;
